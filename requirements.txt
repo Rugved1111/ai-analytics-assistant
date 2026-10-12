@@ -2,3 +2,4 @@ python-dotenv
 google-genai
 psycopg[binary]
 pydantic
+sentence-transformers
