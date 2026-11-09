@@ -3,3 +3,7 @@ google-genai
 psycopg[binary]
 pydantic
 sentence-transformers
+langchain
+langgraph
+langchain-google-genai
+plotly

@@ -11,3 +11,4 @@ __pycache__/
 # macOS clutter
 .DS_Store
 data/raw/
+charts/
