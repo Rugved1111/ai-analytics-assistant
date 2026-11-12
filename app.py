@@ -9,6 +9,7 @@ import plotly.express as px
 import requests
 import streamlit as st
 
+# API_URL=inprocess runs the FastAPI app inside Streamlit (one process, used for free hosting).
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
 
 EXAMPLES = [
@@ -25,9 +26,26 @@ st.set_page_config(page_title="AI Analytics Assistant", page_icon=":material/ins
 
 # ---------- API calls ----------
 
+@st.cache_resource(show_spinner="Loading the assistant...")
+def in_process_client():
+    from fastapi.testclient import TestClient
+
+    import api
+    return TestClient(api.app)
+
+
+def call_api(method, path, timeout, **kwargs):
+    if API_URL == "inprocess":
+        try:
+            return getattr(in_process_client(), method)(path, **kwargs)
+        except Exception as e:  # keep the same error handling as the HTTP path
+            raise requests.ConnectionError(str(e)) from e
+    return getattr(requests, method)(f"{API_URL}{path}", timeout=timeout, **kwargs)
+
+
 @st.cache_data(ttl=600, show_spinner=False)
 def get_kpis():
-    resp = requests.get(f"{API_URL}/kpis", timeout=15)
+    resp = call_api("get", "/kpis", 15)
     resp.raise_for_status()
     return resp.json()
 
@@ -35,14 +53,14 @@ def get_kpis():
 @st.cache_data(ttl=30, show_spinner=False)
 def get_health():
     try:
-        return requests.get(f"{API_URL}/health", timeout=5).json()
+        return call_api("get", "/health", 5).json()
     except requests.RequestException:
         return None
 
 
 def ask_api(question, fresh):
     try:
-        resp = requests.post(f"{API_URL}/ask", json={"question": question, "fresh": fresh}, timeout=180)
+        resp = call_api("post", "/ask", 180, json={"question": question, "fresh": fresh})
     except requests.RequestException:
         return {"error": "Can't reach the API. Is `uvicorn api:app --port 8000` running?"}
     if resp.status_code != 200:
@@ -241,7 +259,7 @@ try:
                   chart_data=k["orders_by_year"], chart_type="area", help="Orders by year, 2014 to 2017")
         st.metric("Avg order value", money(k["aov"]), border=True, height="stretch",
                   help=f"Total sales / distinct orders, across {k['customers']:,} customers")
-except requests.RequestException:
+except Exception:  # API down (HTTP) or database down (in-process)
     st.warning("Start the API to see the headline numbers: `uvicorn api:app --port 8000`",
                title="API offline", icon=":material/cloud_off:")
 

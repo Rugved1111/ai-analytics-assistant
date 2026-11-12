@@ -81,7 +81,7 @@ def run_sql(sql, max_rows=20):
     """Run the query as the read-only ai_reader user."""
     with psycopg.connect(
         host=os.environ.get("DB_HOST", "localhost"),
-        port=5432,
+        port=int(os.environ.get("DB_PORT", "5432")),
         dbname=os.environ["POSTGRES_DB"],
         user=os.environ["AI_DB_USER"],
         password=os.environ["AI_DB_PASSWORD"],

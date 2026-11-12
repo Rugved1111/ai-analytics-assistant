@@ -31,13 +31,16 @@ Backup question: **Show total sales by year as a line chart** (sales grew from $
 
 ## Asking a new question live
 
-- Type it in the box at the bottom. A new question takes 25 to 45 seconds and uses about 3 of the 20 free Gemini requests per day, so plan on 4 or 5 live questions at most.
-- If the first model's daily quota runs out, the API switches to a second free model automatically.
-- Good live questions: "Which region has the lowest profit margin?", "Who are our top 5 customers by sales?", "How much profit did heavily discounted order lines make?"
+- Type it in the box at the bottom. A new question takes about 20 to 45 seconds and uses about 3 Gemini requests.
+- If Gemini is busy (it returned "503 overloaded" several times today) or a model's free quota runs out, the API retries and then switches to a backup model by itself. If everything is busy, the app says so politely; move on to a saved sidebar question.
+- All 30 questions from the evaluation set are saved too, so these also answer instantly: "Who are our top 5 customers by sales?", "Which region has the lowest profit margin?", "How much did our VIP customers spend in total?", "What was our year-over-year sales growth in 2017?", "Plot monthly sales in 2017 as a line chart". The full list is in `evals/questions.py`.
+- Good new questions to ask live: "Which category has the highest profit margin?", "Which customer segment is most profitable?", "What is the average discount in each region?"
 
 ## Talking points
 
 - **Trust:** every answer shows the SQL, the raw rows and the business rule used. Nothing is a black box.
 - **Safety:** the AI uses a read-only database user with a 5-second timeout, plus a check that blocks anything other than a SELECT. It cannot change or delete data.
 - **Your definitions:** company terms live in a plain business-notes document. Change the notes and the assistant follows the new rule, with no code changes.
+- **Measured accuracy:** 30/30 on a 30-question test set with a hand-written answer key, plus an LLM grader score of 4.91 out of 5 on the written answers.
+- **Works with Claude Desktop too:** the same tools are available as an MCP server.
 - **Cost:** runs on the Gemini free tier. Repeated questions are answered from saved results at no cost.

@@ -13,3 +13,4 @@ __pycache__/
 data/raw/
 charts/
 cache/
+deploy/sales_dump.sql

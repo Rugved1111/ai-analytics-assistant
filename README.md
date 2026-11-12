@@ -50,7 +50,11 @@ flowchart LR
 | `agent_tools.py` | The three tools and the SQL guardrail |
 | `search_docs.py`, `ingest_docs.py` | RAG: embed and search `docs/business_notes.md` |
 | `text_to_sql.py`, `rag_answer.py` | Earlier phases: one-shot text-to-SQL and RAG |
-| `eval.py` | Checks answers against the answer key |
+| `eval.py` | Quick check of the 6 demo questions against the answer key |
+| `evals/` | 30-question evaluation set, runner and LLM grader |
+| `tests/` | pytest suite: guardrails, API, MCP server, answer key (no Gemini requests) |
+| `mcp_server.py` | MCP server exposing the tools to Claude Desktop and other MCP clients |
+| `deploy/`, `docs/DEPLOYMENT.md` | Free hosting plan and database export scripts |
 | `sql/` | Schema, cleaning, practice queries, read-only role, answer keys |
 
 ## Safety guardrails
@@ -59,17 +63,41 @@ The model never gets write access, and every layer assumes the one before it cou
 
 | Layer | Guardrail |
 |---|---|
-| Database role | The agent connects as `ai_reader`: `SELECT` on 4 tables only, `default_transaction_read_only = on`, 5 second `statement_timeout`. |
+| Database role | The agent connects as `ai_reader`: `SELECT` on 5 tables only, `default_transaction_read_only = on`, 5 second `statement_timeout`. |
 | Query check | `check_select()` refuses anything that is not one `SELECT`/`WITH` statement, and blocks keywords such as `DROP`, `DELETE`, `UPDATE` and `pg_sleep` before the query reaches Postgres. |
 | Row limit | Results are capped (20 rows to the model, 100 to the UI). |
 | Agent loop cap | At most 12 steps (6 Gemini requests) per question; the UI says so if the cap is hit. |
 | Grounded numbers | The prompt requires every number to come from `run_sql`, and the UI shows the SQL and the raw rows so anyone can check. |
 | Secrets | API keys and passwords live in `.env`, which is git-ignored. |
-| Cost | Gemini free tier only. Saved answers cost 0 requests, and the API falls back to a second free model if the first one's daily quota runs out. |
+| Reliability | If Gemini is overloaded (503) the API retries once, then switches to a second free model; the same happens when a model's daily quota runs out (429). |
+| Cost | Gemini free tier only. Saved answers cost 0 requests. |
+| Tested | 74 pytest tests cover the guardrail, the read-only role, the timeout, the API and the MCP server. |
 
 ## Results
 
-`python eval.py` compares the agent's result tables against queries written by hand (`sql/03_practice_queries.sql`, `sql/06_rag_answer_key.sql`):
+### 30-question evaluation (Phase 6)
+
+`evals/questions.py` holds 30 business questions, each with a hand-written answer-key query. A question passes when every value the key query returns appears in the agent's result table, and chart questions must also return a chart. An optional LLM grader then checks the written answer against the key.
+
+| Measure | Result |
+|---|---|
+| Execution accuracy | **30/30** (basic 15/15, needs a business rule 12/12, charts 3/3) |
+| LLM grader (Gemini, 1 to 5) | **4.91 average** on the 23 answers graded (the other 7 grader calls hit Gemini 503 errors) |
+| Answers flagged for invented numbers | 1, a false alarm: the answer mentioned the data's date range (2014 to 2017) |
+| Cost and speed | 2.6 Gemini requests and about 22 seconds per new question; saved answers are instant |
+
+Full per-question results: [evals/results/latest.md](evals/results/latest.md).
+
+```bash
+python -m evals.run_eval                 # score saved answers: 0 Gemini requests
+python -m evals.run_eval --live          # ask Gemini for questions without a saved answer
+python -m evals.run_eval --grade         # add the LLM grader (1 request per question)
+python -m pytest                         # 74 tests, no Gemini requests
+```
+
+### Demo questions
+
+`python eval.py` checks the 6 sidebar questions:
 
 | Question | Expected (answer key) | Result |
 |---|---|---|
@@ -80,7 +108,34 @@ The model never gets write access, and every layer assumes the one before it cou
 | Sales by year (line chart) | $484,247.50 to $733,215.26 | Pass |
 | Sub-categories that lose money | Tables, Bookcases, Supplies | Pass |
 
-**6/6 pass.** The earlier RAG phase scored 4/4 on rule-based questions.
+## Use it from Claude Desktop or any MCP client (Phase 7)
+
+`mcp_server.py` exposes the same tools over the Model Context Protocol, with the same guardrails:
+
+| MCP item | What it does |
+|---|---|
+| `search_docs` tool | Finds business definitions (VIP, late order, AOV...) |
+| `run_sql` tool | Read-only SELECT, returns columns and rows |
+| `make_chart` tool | Saves an interactive chart and returns its data |
+| `analytics://schema`, `analytics://business-notes` resources | Schema and business notes |
+| `analyst` prompt | A ready-made prompt for business questions |
+
+The client's own model does the reasoning, so this uses 0 Gemini requests. Try it with `python mcp_client_demo.py`, or add it to Claude Desktop's `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "sales-analytics": {
+      "command": "/path/to/ai-analytics-assistant/.venv/bin/python",
+      "args": ["/path/to/ai-analytics-assistant/mcp_server.py"]
+    }
+  }
+}
+```
+
+## Deploy it for free (Phase 9)
+
+Neon (free Postgres with pgvector) plus Streamlit Community Cloud, with the API running inside the Streamlit process (`API_URL=inprocess`). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the steps and scripts.
 
 ## Run it
 
@@ -148,4 +203,4 @@ The raw data is not stored in this repo (it's in `.gitignore`). To rebuild the d
 
 ## Tech stack
 
-Python, PostgreSQL 17 + pgvector, LangChain / LangGraph, Google Gemini (free tier), sentence-transformers, FastAPI, Streamlit, Plotly, Docker.
+Python, PostgreSQL 17 + pgvector, LangChain / LangGraph, Google Gemini (free tier), sentence-transformers, FastAPI, Streamlit, Plotly, MCP, pytest, Docker.

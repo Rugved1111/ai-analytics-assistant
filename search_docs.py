@@ -33,7 +33,7 @@ def search_docs(question, k=3):
     # Read-only user: the app only ever reads the notes.
     with psycopg.connect(
         host=os.environ.get("DB_HOST", "localhost"),
-        port=5432,
+        port=int(os.environ.get("DB_PORT", "5432")),
         dbname=os.environ["POSTGRES_DB"],
         user=os.environ["AI_DB_USER"],
         password=os.environ["AI_DB_PASSWORD"],
