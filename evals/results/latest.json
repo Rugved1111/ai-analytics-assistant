@@ -1,0 +1,629 @@
+{
+  "summary": {
+    "run_at": "2026-11-12T18:22:11",
+    "questions": 30,
+    "answered": 30,
+    "passed": 30,
+    "accuracy_pct": 100.0,
+    "by_kind": {
+      "basic": "15/15",
+      "rule": "12/12",
+      "chart": "3/3"
+    },
+    "avg_gemini_requests": 2.6,
+    "avg_seconds_live": null,
+    "llm_grade_avg": 4.91,
+    "answers_with_invented_numbers": 1
+  },
+  "results": [
+    {
+      "id": "q01",
+      "kind": "basic",
+      "question": "What are our total sales, total profit and profit margin?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Our total sales are $2,297,200.86 with a total profit of $286,397.02. Per company guidelines, the profit margin was calculated by dividing total profit by total sales, resulting in 12.47%.",
+      "sql": "SELECT sum(sales) AS total_sales, sum(profit) AS total_profit, (sum(profit) / sum(sales)) * 100 AS profit_margin FROM order_lines",
+      "rule": "Profit and profit margin",
+      "gemini_requests": 3,
+      "seconds": 27.8,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly states the sales, profit, and profit margin with appropriate rounding that matches the answer key and retrieved data.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q02",
+      "kind": "basic",
+      "question": "How many orders have we received in total?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "We have received a total of 5,009 orders from 2014 to 2017.",
+      "sql": "SELECT count(DISTINCT order_id) FROM orders",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 16.8,
+      "cached": true,
+      "grade": {
+        "score": 3,
+        "invented_numbers": true,
+        "reason": "The assistant correctly identified the total number of orders as 5,009, but it invented the date range 'from 2014 to 2017' which was not present in the answer key or retrieved data.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q03",
+      "kind": "basic",
+      "question": "How many customers do we have?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "We have a total of 793 unique customers in our database.",
+      "sql": "SELECT COUNT(DISTINCT customer_id) FROM customers",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 33.6,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant's answer directly answers the question with the exact count of 793 customers, fully matching both the retrieved data and the answer key.",
+        "grader_model": "gemini-flash-latest"
+      }
+    },
+    {
+      "id": "q04",
+      "kind": "rule",
+      "question": "What is our average order value?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Our average order value (AOV) is $458.61, calculated as total sales divided by the number of distinct orders according to company policy.",
+      "sql": "SELECT SUM(sales) / COUNT(DISTINCT order_id) AS aov FROM order_lines",
+      "rule": "Orders and average order value",
+      "gemini_requests": 3,
+      "seconds": 18.4,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly provided the average order value rounded to two decimal places, which matches the answer key and the retrieved data.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q05",
+      "kind": "basic",
+      "question": "What are total sales and profit for each category?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Total sales for Technology were $836,154.03 with a profit of $145,454.95, while Furniture generated $741,999.80 in sales and $18,451.27 in profit. Office Supplies reached $719,047.03 in sales and $122,490.80 in profit.",
+      "sql": "SELECT p.category, SUM(ol.sales) AS total_sales, SUM(ol.profit) AS total_profit\nFROM order_lines ol\nJOIN products p ON ol.product_key = p.product_key\nGROUP BY p.category\nORDER BY total_sales DESC;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 15.0,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q06",
+      "kind": "basic",
+      "question": "Who are our top 5 customers by sales?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Our top 5 customers by total sales are Sean Miller ($25,043.05), Tamara Chand ($19,052.22), Raymond Buch ($15,117.34), Tom Ashbrook ($14,595.62), and Adrian Barton ($14,473.57). Sean Miller leads all customers by a significant margin across the 2014\u20132017 period.",
+      "sql": "SELECT c.customer_name, SUM(ol.sales) AS total_sales\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY c.customer_id, c.customer_name\nORDER BY total_sales DESC\nLIMIT 5;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 20.1,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identifies the top 5 customers and their respective sales amounts matching the retrieved data, formats the numbers appropriately with rounding and currency symbols, and matches the answer key.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q07",
+      "kind": "basic",
+      "question": "Which 3 sub-categories have the lowest total profit?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The three sub-categories with the lowest total profit are Tables (-$17,725.48), Bookcases (-$3,472.56), and Supplies (-$1,189.10). All three generated negative total profits over the 2014\u20132017 period.",
+      "sql": "SELECT p.sub_category, SUM(ol.profit) AS total_profit\nFROM order_lines ol\nJOIN products p ON ol.product_key = p.product_key\nGROUP BY p.sub_category\nORDER BY total_profit ASC\nLIMIT 3;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 13.1,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q08",
+      "kind": "basic",
+      "question": "What is the profit margin for each region?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The profit margin is highest in the West region at 14.94%, followed by the East (13.48%) and South (11.93%). The Central region has the lowest profit margin at 7.92%. As per company policy, these margins were calculated by dividing total profit by total sales for each region.",
+      "sql": "SELECT o.region, \n       ROUND(SUM(ol.profit)::numeric / SUM(ol.sales) * 100, 2) AS profit_margin_pct\nFROM orders o\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY o.region\nORDER BY profit_margin_pct DESC;",
+      "rule": "Profit and profit margin",
+      "gemini_requests": 3,
+      "seconds": 13.7,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant's answer correctly matches all the profit margin numbers for each region from the retrieved data and answer key. Ordering differences are negligible, and the numbers are accurate.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q09",
+      "kind": "basic",
+      "question": "Which region has the lowest profit margin?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The Central region has the lowest profit margin at 7.92%, with total profit of $39,706.36 on sales of $501,239.89. Profit margin is calculated as total profit divided by total sales per the company definition.",
+      "sql": "SELECT o.region, SUM(ol.profit) AS total_profit, SUM(ol.sales) AS total_sales,\n       (SUM(ol.profit) / NULLIF(SUM(ol.sales), 0)) * 100 AS profit_margin\nFROM orders o\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY o.region\nORDER BY profit_margin ASC;",
+      "rule": "Profit and profit margin",
+      "gemini_requests": 3,
+      "seconds": 40.3,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q10",
+      "kind": "basic",
+      "question": "What is the average number of days to ship for each ship mode?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The average number of days to ship varies by ship mode, ranging from 0.0 days for Same Day shipping to 5.0 days for Standard Class. First Class averages 2.2 days, and Second Class averages 3.2 days.",
+      "sql": "SELECT ship_mode, ROUND(AVG(ship_date - order_date), 1) AS avg_days_to_ship FROM orders GROUP BY ship_mode ORDER BY avg_days_to_ship;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 11.3,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant's answer accurately reflects the data retrieved and matches the answer key values (with appropriate formatting and mentioning all ship modes and their corresponding average days).",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q11",
+      "kind": "basic",
+      "question": "What are total sales by customer segment?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Total sales by customer segment are led by Consumer at $1,161,401.35, followed by Corporate at $706,146.37, and Home Office at $429,653.15. Consumer represents the largest share of total revenue across all segments.",
+      "sql": "SELECT c.segment, SUM(ol.sales) AS total_sales\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY c.segment\nORDER BY total_sales DESC;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 7.1,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant's text correctly reflects the rounded values from the retrieved data and answer key, and accurately answers the question.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q12",
+      "kind": "basic",
+      "question": "Which 5 states have the highest sales?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The 5 states with the highest total sales are California ($457,687.63), New York ($310,876.27), Texas ($170,188.05), Washington ($138,641.27), and Pennsylvania ($116,511.91).",
+      "sql": "SELECT o.state, SUM(ol.sales) AS total_sales\nFROM orders o\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY o.state\nORDER BY total_sales DESC\nLIMIT 5;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 43.3,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identified the top 5 states and provided their corresponding sales figures from the retrieved data with appropriate formatting and rounding.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q13",
+      "kind": "basic",
+      "question": "Which city has the highest total sales?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "New York City has the highest total sales with $256,368.16 across all years.",
+      "sql": "SELECT o.city, SUM(l.sales) AS total_sales\nFROM orders o\nJOIN order_lines l ON o.order_id = l.order_id\nGROUP BY o.city\nORDER BY total_sales DESC\nLIMIT 1;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 9.7,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identified New York City as having the highest total sales and included the exact sales figure retrieved from the data, which agrees with the answer key.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q14",
+      "kind": "basic",
+      "question": "How many units did we sell in 2017?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "In 2017, we sold a total of 12,476 units across all order lines.",
+      "sql": "SELECT SUM(ol.quantity) AS total_units \nFROM order_lines ol \nJOIN orders o ON ol.order_id = o.order_id \nWHERE EXTRACT(YEAR FROM o.order_date) = 2017;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 21.9,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant's answer correctly matches the data retrieved and the answer key, and directly answers the question without introducing any invented numbers.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q15",
+      "kind": "basic",
+      "question": "What are total sales for each ship mode?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Total sales by ship mode are $1,358,215.74 for Standard Class, $459,193.57 for Second Class, $351,428.42 for First Class, and $128,363.13 for Same Day.",
+      "sql": "SELECT o.ship_mode, SUM(ol.sales) AS total_sales\nFROM orders o\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY o.ship_mode\nORDER BY total_sales DESC;",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 12.1,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly states the sales for each ship mode, properly rounding the retrieved floating-point numbers to two decimal places to match standard currency format.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q16",
+      "kind": "basic",
+      "question": "Which sub-categories lose money?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The sub-categories that lose money are Tables (-$17,725.48), Bookcases (-$3,472.56), and Supplies (-$1,189.10), based on total negative profit across all order lines.",
+      "sql": "SELECT p.sub_category, SUM(ol.profit) AS total_profit\nFROM order_lines ol\nJOIN products p ON ol.product_key = p.product_key\nGROUP BY p.sub_category\nHAVING SUM(ol.profit) < 0\nORDER BY total_profit ASC;",
+      "rule": "Profit and profit margin",
+      "gemini_requests": 3,
+      "seconds": 45.6,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identified the sub-categories from the answer key and included the exact numerical profit values provided in the retrieved data with appropriate formatting.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q17",
+      "kind": "rule",
+      "question": "How many VIP customers do we have?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "We have 20 VIP customers, based on the business rule that a VIP customer has lifetime sales of $10,000 or more.",
+      "sql": "SELECT COUNT(*) FROM (\n    SELECT c.customer_id\n    FROM customers c\n    JOIN orders o ON c.customer_id = o.customer_id\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    GROUP BY c.customer_id\n    HAVING SUM(ol.sales) >= 10000.0\n) vip;",
+      "rule": "Customers and segments",
+      "gemini_requests": 3,
+      "seconds": 17.7,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly states the number 20 from the answer key and retrieved data, and appropriately adds the business context.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q18",
+      "kind": "rule",
+      "question": "How much did our VIP customers spend in total?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Our VIP customers (defined as having lifetime sales of $10,000 or more) spent a total of $264,909.67.",
+      "sql": "\nSELECT sum(c_sales.total_sales) AS total_vip_sales\nFROM (\n    SELECT c.customer_id, sum(ol.sales) AS total_sales\n    FROM customers c\n    JOIN orders o ON c.customer_id = o.customer_id\n    JOIN order_lines ol ON o.order_id = ol.order_id\n    GROUP BY c.customer_id\n    HAVING sum(ol.sales) >= 10000\n) c_sales;\n",
+      "rule": "Customers and segments",
+      "gemini_requests": 3,
+      "seconds": 16.2,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly extracted and rounded the total spend from the retrieved data matching the answer key, and accurately answered the question.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q19",
+      "kind": "rule",
+      "question": "How many orders were late, and what percentage of all orders is that?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "There were 904 late orders out of a total of 5,009 orders. This represents 18.05% of all orders, following the business rule that an order is late if it took more than 5 days to ship.",
+      "sql": "SELECT \n    SUM(CASE WHEN ship_date - order_date > 5 THEN 1 ELSE 0 END) AS late_orders,\n    COUNT(*) AS total_orders,\n    ROUND(100.0 * SUM(CASE WHEN ship_date - order_date > 5 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_late\nFROM (\n    SELECT order_id, MIN(order_date) AS order_date, MIN(ship_date) AS ship_date\n    FROM orders\n    GROUP BY order_id\n) o",
+      "rule": "Shipping",
+      "gemini_requests": 3,
+      "seconds": 37.8,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identified 904 late orders and 18.05% (matching the 18.0 rounded in the answer key), and used the retrieved data total of 5009 orders. Extra supporting numbers are allowed since they appeared in the retrieved data.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q20",
+      "kind": "rule",
+      "question": "How many late orders were there for each ship mode?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Using the business rule that an order is late if it takes more than 5 days to ship, only Standard Class orders experienced delays. There were 904 late orders out of 2,994 total Standard Class orders. First Class, Second Class, and Same Day shipping modes had zero late orders.",
+      "sql": "SELECT \n    o.ship_mode,\n    COUNT(DISTINCT o.order_id) FILTER (WHERE (o.ship_date - o.order_date) > 5) AS late_orders,\n    COUNT(DISTINCT o.order_id) AS total_orders\nFROM orders o\nGROUP BY o.ship_mode\nORDER BY late_orders DESC;",
+      "rule": "Shipping",
+      "gemini_requests": 5,
+      "seconds": 63.1,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identifies the number of late orders for each ship mode matching the answer key, and uses extra supporting numbers that are directly present in the retrieved data.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q21",
+      "kind": "rule",
+      "question": "What was the total profit on heavily discounted order lines?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The total profit on heavily discounted order lines (discounts of 40% or more) was -$122,615.64, representing a substantial net loss.",
+      "sql": "SELECT sum(profit) FROM order_lines WHERE discount >= 0.4;",
+      "rule": "Discounts",
+      "gemini_requests": 3,
+      "seconds": 23.9,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly retrieved and rounded the total profit from the data, which matches the answer key, and accurately answered the question.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q22",
+      "kind": "rule",
+      "question": "How many order lines had a heavy discount?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "There were 1,139 order lines that had a heavy discount (defined as a discount of 0.4 or more).",
+      "sql": "SELECT count(*) FROM order_lines WHERE discount >= 0.4;",
+      "rule": "Discounts",
+      "gemini_requests": 3,
+      "seconds": 35.7,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly states the number of order lines with a heavy discount as 1,139, which matches both the answer key and the retrieved data.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q23",
+      "kind": "rule",
+      "question": "What percentage of order lines were discounted?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Out of 9,994 total order lines, 5,196 lines had a discount applied. This means that 51.99% of all order lines were discounted.",
+      "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN discount > 0 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_discounted,\n  SUM(CASE WHEN discount > 0 THEN 1 ELSE 0 END) AS discounted_lines,\n  COUNT(*) AS total_lines\nFROM order_lines",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 13.4,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q24",
+      "kind": "rule",
+      "question": "How many active customers did we have in 2017?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "We had 693 active customers in 2017, defined as customers who placed at least one order during that year.",
+      "sql": "SELECT count(DISTINCT customer_id) FROM orders WHERE extract(year from order_date) = 2017",
+      "rule": "Customers and segments",
+      "gemini_requests": 3,
+      "seconds": 27.5,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly retrieved and stated the number 693, matching both the answer key and the retrieved data, and fully answered the question.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q25",
+      "kind": "rule",
+      "question": "What were our total sales last year?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Our total sales last year (2017) were $733,215.26.",
+      "sql": "SELECT SUM(sales) FROM orders o JOIN order_lines ol ON o.order_id = ol.order_id WHERE EXTRACT(YEAR FROM o.order_date) = 2017",
+      "rule": null,
+      "gemini_requests": 2,
+      "seconds": 2.1,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q26",
+      "kind": "rule",
+      "question": "What was our year-over-year sales growth in 2017?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "In 2017, total sales reached $733,215.26 compared to $609,205.60 in 2016. This represents a year-over-year sales growth of 20.36%.",
+      "sql": "\n  SELECT \n    (733215.2552 - 609205.5980) / 609205.5980 * 100 AS yoy_growth_pct;\n",
+      "rule": null,
+      "gemini_requests": 3,
+      "seconds": 17.1,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q27",
+      "kind": "rule",
+      "question": "What is the average order value for each customer segment?",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "The average order value (AOV) is highest for the Home Office segment at $472.67, followed by Corporate at $466.41, and Consumer at $449.11. Per company definition, AOV is calculated as total sales divided by the number of distinct orders for each segment.",
+      "sql": "SELECT \n    c.segment,\n    SUM(ol.sales) / COUNT(DISTINCT o.order_id) AS aov\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nJOIN order_lines ol ON o.order_id = ol.order_id\nGROUP BY c.segment\nORDER BY aov DESC;",
+      "rule": "Orders and average order value",
+      "gemini_requests": 3,
+      "seconds": 15.8,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly identifies the average order values for all three customer segments, matches the answer key (with appropriate rounding to two decimal places based on the retrieved data), and answers the question accurately.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q28",
+      "kind": "chart",
+      "question": "Show total sales by category as a bar chart",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Technology led total sales with $836,154.03, followed closely by Furniture at $741,999.80 and Office Supplies at $719,047.03. A bar chart illustrating these category totals has been successfully generated.",
+      "sql": "SELECT p.category, SUM(ol.sales) AS total_sales FROM order_lines ol JOIN products p ON ol.product_key = p.product_key GROUP BY p.category ORDER BY total_sales DESC",
+      "rule": null,
+      "gemini_requests": 3,
+      "seconds": 38.0,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly retrieved and reported the sales figures by category, properly rounding the numbers to two decimal places for currency format as supported by the retrieved data. It also addressed the user's request to present the data as a bar chart.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    },
+    {
+      "id": "q29",
+      "kind": "chart",
+      "question": "Show total sales by year as a line chart",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Total sales grew steadily from $484,247.50 in 2014 to $733,215.26 in 2017, with a notable acceleration in 2016 and 2017.",
+      "sql": "SELECT EXTRACT(YEAR FROM o.order_date)::TEXT AS order_year, ROUND(SUM(ol.sales)::NUMERIC, 2) AS total_sales FROM orders o JOIN order_lines ol ON o.order_id = ol.order_id GROUP BY order_year ORDER BY order_year;",
+      "rule": null,
+      "gemini_requests": 3,
+      "seconds": 27.0,
+      "cached": true,
+      "grade": {
+        "error": "ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand "
+      }
+    },
+    {
+      "id": "q30",
+      "kind": "chart",
+      "question": "Plot monthly sales in 2017 as a line chart",
+      "status": "pass",
+      "correct_numbers": true,
+      "chart_ok": true,
+      "missing": [],
+      "answer": "Monthly sales in 2017 ranged from a low of $20,301.13 in February to a peak of $118,447.83 in November. Sales showed strong seasonal growth toward the end of the year, particularly peaking in November and December.",
+      "sql": "\n  SELECT TO_CHAR(order_date, 'YYYY-MM') AS month, SUM(sales) AS total_sales\n  FROM orders o\n  JOIN order_lines ol ON o.order_id = ol.order_id\n  WHERE order_date >= '2017-01-01' AND order_date <= '2017-12-31'\n  GROUP BY TO_CHAR(order_date, 'YYYY-MM')\n  ORDER BY month;\n",
+      "rule": null,
+      "gemini_requests": 3,
+      "seconds": 20.7,
+      "cached": true,
+      "grade": {
+        "score": 5,
+        "invented_numbers": false,
+        "reason": "The assistant correctly plotted/described the monthly sales in 2017 using the numbers from its retrieved data, which match the answer key values (allowing for rounding and formatting). It directly answers the question.",
+        "grader_model": "gemini-flash-lite-latest"
+      }
+    }
+  ]
+}

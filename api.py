@@ -37,6 +37,7 @@ CACHE_FILE = Path("cache/answers.json")
 class Question(BaseModel):
     question: str
     fresh: bool = False  # True = ignore the saved answer and ask Gemini again
+    cache_only: bool = False  # True = only return a saved answer, never call Gemini (for evals)
 
 
 class Step(BaseModel):
@@ -101,6 +102,12 @@ def to_json(value):
 def is_quota_error(err):
     text = str(err)
     return "429" in text or "RESOURCE_EXHAUSTED" in text or "quota" in text.lower()
+
+
+def is_busy_error(err):
+    """Gemini's servers are overloaded for a moment (503); worth retrying."""
+    text = str(err)
+    return "503" in text or "UNAVAILABLE" in text or "overloaded" in text.lower()
 
 
 def cache_key(question):
@@ -252,27 +259,35 @@ def ask(q: Question):
     saved = load_cache().get(cache_key(question))
     if saved and not q.fresh:
         return Answer(**{**saved, "cached": True})
+    if q.cache_only:
+        raise HTTPException(status_code=404, detail="No saved answer for this question.")
 
+    # Try each free model in turn. A busy model (503) gets one more try after a short pause;
+    # a model whose daily quota is used up (429) is skipped.
     last_error = None
-    for model in MODELS:
+    attempts = [(m, wait) for m in MODELS for wait in (0, 3)]
+    for model, wait in attempts:
+        if last_error is not None and is_quota_error(last_error) and wait:
+            continue
+        time.sleep(wait)
         start = time.time()
         try:
             messages, hit_cap = run_agent(question, model)
         except Exception as e:
             last_error = e
-            if is_quota_error(e):
-                continue  # this model's free quota is used up: try the next one
+            if is_quota_error(e) or is_busy_error(e):
+                continue
             raise HTTPException(status_code=502, detail=f"Agent failed: {type(e).__name__}: {e}")
         result = summarise(question, messages, hit_cap, model, time.time() - start)
         if result.answer and not hit_cap:
             save_to_cache(result)
         return result
 
-    # Every model is out of free quota. A saved answer is better than an error.
+    # Every model is busy or out of quota. A saved answer is better than an error.
     if saved:
         return Answer(**{**saved, "cached": True})
-    raise HTTPException(
-        status_code=429,
-        detail="The free Gemini quota is used up for today. Try a question that was asked before, "
-               f"or try again tomorrow. ({type(last_error).__name__})",
-    )
+    if is_quota_error(last_error):
+        raise HTTPException(status_code=429, detail="The free Gemini quota is used up for today. "
+                            "Try a question that was asked before, or try again tomorrow.")
+    raise HTTPException(status_code=503, detail="Gemini is very busy right now. "
+                        "Please try again in a minute, or pick one of the saved example questions.")

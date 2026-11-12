@@ -11,3 +11,5 @@ fastapi
 uvicorn[standard]
 streamlit
 requests
+mcp
+pytest
