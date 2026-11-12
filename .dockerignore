@@ -1,0 +1,11 @@
+.env
+.venv
+.git
+__pycache__
+*.pyc
+data/raw
+charts
+cache
+.claude
+.agents
+docs/screenshots

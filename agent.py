@@ -17,6 +17,8 @@ from agent_tools import TOOLS
 from rag_answer import SCHEMA
 
 MODEL = "gemini-flash-lite-latest"
+# Free-tier quota is per model, so if the main model runs out the API falls back to these.
+FALLBACK_MODELS = ["gemini-flash-latest"]
 # Every Gemini call and every tool run is one step, so 12 steps = at most 6 Gemini requests.
 MAX_STEPS = 12
 
@@ -27,16 +29,17 @@ Answer questions with the tools. Rules:
 2. Get every number from run_sql (PostgreSQL, SELECT only, schema below). Never invent or estimate numbers.
 3. If run_sql returns an SQL error, fix the query and try again.
 4. Only call make_chart when the user asks for a chart, graph or plot.
-5. Final answer: the answer with its key numbers, then the SQL you ran,
-   then the business rule you used (if any) and the chart path (if any).
+5. Final answer: 1-4 short sentences for a business user with the key numbers
+   (format money like $1,234.56). If you used a business rule, say which one in plain words.
+   Do not repeat the SQL or file paths; the app shows those separately.
 
 Schema:
 {SCHEMA}"""
 
 
-def build_agent():
+def build_agent(model=MODEL):
     llm = ChatGoogleGenerativeAI(
-        model=MODEL,
+        model=model,
         temperature=0,
         google_api_key=os.environ["GEMINI_API_KEY"],
         max_retries=1,

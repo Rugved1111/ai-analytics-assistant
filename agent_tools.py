@@ -22,6 +22,28 @@ from search_docs import search_docs as find_chunks
 CHART_DIR = "charts"
 
 
+# Words that change data or the server. The database role is read-only anyway;
+# this check refuses them before the query ever reaches Postgres.
+BLOCKED = re.compile(
+    r"\b(insert|update|delete|drop|alter|create|truncate|grant|revoke|copy|vacuum|pg_sleep|pg_terminate_backend)\b",
+    re.IGNORECASE,
+)
+
+
+def check_select(sql):
+    """Return an error message if the SQL is not one plain SELECT, else None."""
+    # Ignore text inside quotes, so a filter like name = 'Update Desk' is fine.
+    body = re.sub(r"'(?:[^']|'')*'", "''", sql).strip().rstrip(";").strip()
+    if ";" in body:
+        return "Guardrail: only one statement is allowed."
+    if not re.match(r"(?is)^(select|with)\b", body):
+        return "Guardrail: only SELECT queries are allowed."
+    found = BLOCKED.search(body)
+    if found:
+        return f"Guardrail: the keyword '{found.group(1)}' is not allowed."
+    return None
+
+
 def format_rows(columns, rows):
     lines = [" | ".join(columns)]
     for row in rows:
@@ -46,6 +68,9 @@ def run_sql(sql: str) -> str:
     """Run one read-only PostgreSQL SELECT query on the sales database
     and return the result as text (at most 20 rows).
     Tables: customers, products, orders, order_lines."""
+    problem = check_select(sql)
+    if problem:
+        return problem
     try:
         columns, rows = query_db(sql)
     except Exception as e:
@@ -58,6 +83,9 @@ def make_chart(sql: str, chart_type: Literal["bar", "line"], title: str) -> str:
     """Draw a chart from a SELECT query that returns exactly 2 columns:
     the first column is the label (x axis), the second is the number (y axis).
     Saves an HTML file and returns its path."""
+    problem = check_select(sql)
+    if problem:
+        return problem
     try:
         columns, rows = query_db(sql, max_rows=100)
     except Exception as e:

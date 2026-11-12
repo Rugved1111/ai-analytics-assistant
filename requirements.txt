@@ -7,3 +7,7 @@ langchain
 langgraph
 langchain-google-genai
 plotly
+fastapi
+uvicorn[standard]
+streamlit
+requests

@@ -80,7 +80,7 @@ def call_gemini(prompt):
 def run_sql(sql, max_rows=20):
     """Run the query as the read-only ai_reader user."""
     with psycopg.connect(
-        host="localhost",
+        host=os.environ.get("DB_HOST", "localhost"),
         port=5432,
         dbname=os.environ["POSTGRES_DB"],
         user=os.environ["AI_DB_USER"],

@@ -12,7 +12,7 @@ MAX_ROWS = 100
 def run_sql(sql: str, max_rows: int = MAX_ROWS) -> dict:
     """Run one query; return its columns, rows, and whether rows were cut off."""
     with psycopg.connect(
-        host="localhost",
+        host=os.environ.get("DB_HOST", "localhost"),
         port=5432,
         dbname=os.environ["POSTGRES_DB"],
         user=os.environ["AI_DB_USER"],
